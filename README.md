@@ -76,7 +76,9 @@ HR Agentic AI is a comprehensive Human Resource Management System (HRMS) built a
 
 ## 🏃‍♂️ Usage
 
-### Running the MCP Server
+### Running the MCP Server   
+
+## MCP Server - Client Configuration  https://modelcontextprotocol.io/docs/develop/build-server
 
 You can run the server directly using Python:
 
