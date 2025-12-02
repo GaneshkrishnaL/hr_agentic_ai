@@ -1,2 +1,2 @@
-# Add your project dependencies here
-# Install with: uv pip install -r requirements.txt
+pip==25.2
+uv==0.9.14
