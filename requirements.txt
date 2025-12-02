@@ -1,2 +1,3 @@
-pip==25.2
-uv==0.9.14
+mcp
+pydantic
+python-dotenv

@@ -4,7 +4,19 @@ from typing import List,Dict,Optional
 
 from mcp.server.fastmcp import FastMCP
 import os 
+from emails import EmailSender
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+email_sender = EmailSender(
+    smtp_server="smtp.gmail.com",
+    port=587,
+    username=os.getenv("email"),
+    password=os.getenv("pwd"),
+    use_tls=True
+)
 
 employee_manager = EmployeeManager()
 leave_manager = LeaveManager()
@@ -49,11 +61,146 @@ def get_employee(name:str)->Dict[str,str]:
     emp_id=eid[0]
     return employee_manager.get_employee_details(emp_id)
 
+@mcp.tool()
+def send_email(subject:str,body:str,to_emails:List[str],html:bool=False)->str:
+    """
+    Sends an email to the specified recipients.
+
+    make the response you generate is very professional and does not look like spam and should make someone who gets this email to make their day better.
+    
+    Args:
+        subject (str): Subject of the email
+        body (str): Body of the email
+        to_emails (List[str]): List of recipient email addresses
+    
+    Returns:
+        str: Confirmation message
+    """
+    email_sender.send_email(subject,body,to_emails,from_email=email_sender.username,html=html)
+    return "Email sent successfully"
+
+@mcp.tool()
+def create_ticket(emp_id: str, item: str, reason:str) -> str:
+    """
+    Create a ticket for buying required items for an employee.
+    :param emp_id: Employee ID
+    :param item: Item requested (Laptop, ID Card, etc.)
+    :param reason: Reason for the request
+    :return: Confirmation message
+    """
+    ticket_req = TicketCreate(emp_id=emp_id, item=item, reason=reason)
+    return ticket_manager.create_ticket(ticket_req)
 
 
+@mcp.tool()
+def update_ticket_status(ticket_id: str, status: str) -> str:
+    """
+    Update the status of a ticket.
+    :param ticket_id: Ticket ID
+    :param status: New status of the ticket
+    :return: Confirmation message
+    """
+    ticket_status_update = TicketStatusUpdate(status=status)
+    return ticket_manager.update_ticket_status(ticket_status_update, ticket_id)
+
+@mcp.tool()
+def list_tickets(employee_id: str, status: str) -> str:
+    """
+    List tickets for an employee with optional status filter.
+    :param employee_id: Employee ID
+    :param status: Ticket status (optional)
+    :return: List of tickets
+    """
+    return ticket_manager.list_tickets(employee_id=employee_id, status=status)
 
 
+@mcp.tool()
+def schedule_meeting(employee_id: str, meeting_datetime: datetime, topic: str) -> str:
+    """
+    Schedule a meeting for an employee.
+    :param employee_id: Employee ID
+    :param meeting_datetime: Date and time of the meeting in python datetime format
+    :param topic: Topic of the meeting
+    :return: Confirmation message
+    """
+    meeting_req = MeetingCreate(
+        emp_id=employee_id,
+        meeting_dt=meeting_datetime,
+        topic=topic
+    )
+    return meeting_manager.schedule_meeting(meeting_req)
 
+
+@mcp.tool()
+def get_meetings(employee_id: str) -> str:
+    """
+    Get the list of meetings scheduled for an employee.
+    :param employee_id: Employee ID
+    :return: List of meetings
+    """
+    return meeting_manager.get_meetings(employee_id)
+
+
+@mcp.tool()
+def cancel_meeting(employee_id: str, meeting_datetime: datetime, topic: str) -> str:
+    """
+    Cancel a scheduled meeting for an employee.
+    :param employee_id: Employee ID
+    :param meeting_datetime: Date and time of the meeting in python datetime format
+    :param topic: Topic of the meeting (optional)
+    :return: Confirmation message
+    """
+    meeting_req = MeetingCancelRequest(
+        emp_id=employee_id,
+        meeting_dt=meeting_datetime,
+        topic=topic
+    )
+    return meeting_manager.cancel_meeting(meeting_req)
+
+
+@mcp.tool()
+def get_employee_leave_balance(emp_id: str) -> str:
+    """
+    Get the leave balance of an employee.
+    :param emp_id: Employee ID
+    :return: Leave balance message
+    """
+    return leave_manager.get_leave_balance(emp_id)
+
+@mcp.tool()
+def apply_leave(emp_id: str, leave_dates: list) -> str:
+    """
+    Apply for leave for an employee.
+    :param emp_id: Employee ID
+    :param leave_dates: List of leave dates
+    :return: Leave application status message
+    """
+    req = LeaveApplyRequest(emp_id=emp_id, leave_dates=leave_dates)
+    return leave_manager.apply_leave(req)
+
+
+@mcp.tool()
+def get_leave_history(emp_id: str) -> str:
+    """
+    Get the leave history of an employee.
+    :param emp_id: Employee ID
+    :return: Leave history message
+    """
+    return leave_manager.get_leave_history(emp_id)
+
+
+@mcp.prompt("onboard_new_employee")
+def onboard_new_employee(employee_name: str, manager_name: str):
+    return f"""Onboard a new employee with the following details:
+    - Name: {employee_name}
+    - Manager Name: {manager_name}
+    Steps to follow:
+    - Add the employee to the HRMS system.
+    - Send a welcome email to the employee with their login credentials. (Format: employee_name@xyz.com)
+    - Notify the manager about the new employee's onboarding.
+    - Create tickets for buying required items : laptop, id card, goodies for the employee.
+    - Schedule an introductory meeting between the employee and the manager.
+    """
 
 
 
