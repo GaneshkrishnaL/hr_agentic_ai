@@ -1,0 +1,2 @@
+# Add your project dependencies here
+# Install with: uv pip install -r requirements.txt
